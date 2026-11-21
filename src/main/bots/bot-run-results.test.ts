@@ -2,14 +2,61 @@ import { describe, expect, it } from 'vitest'
 import type { AutomationRun } from '../../shared/automations/history/automation-run'
 import { normalizeLoadedAutomationRuns } from '../persistence/loading-store/profile-loading/normalize-loaded-state-collections'
 import type { PersistedState } from '../../shared/orca-profiles/persisted-state-types'
+import { makeTestBot } from './bot.test-fixture'
 import {
   deliverBotRunResult,
   type BotRunDeliveryDependencies,
   type BotRunResult
 } from './bot-run-results'
+import type { BotTurnEnd } from './bot-run-turn-watch'
 
 const NOTICE =
   "This run's message was answered together with another message, so its result wasn't posted."
+
+describe('automation model failures', () => {
+  const unavailable = { kind: 'modelUnavailable' as const }
+
+  function failedRun(ended: BotTurnEnd, runsIn: 'new' | 'chat' = 'new') {
+    return deliverBotRunResult({ notify: () => {} } as BotRunDeliveryDependencies, {
+      automation: { id: 'auto-1', name: 'Morning digest', dtstart: 1 },
+      run: { id: 'run-1', trigger: 'scheduled' },
+      bot: makeTestBot({ agent: 'claude', launch: { model: 'model-x' } }),
+      target: { runsIn, resultsTo: 'none' },
+      sessionId: 'session-1',
+      ended
+    })
+  }
+
+  it('keeps the failed run’s agent and model when the provider does not name them', async () => {
+    const completion = await failedRun({ outcome: 'failure', message: '', failure: unavailable })
+
+    expect(completion).toMatchObject({
+      status: 'dispatch_failed',
+      errorCode: 'agentModelUnavailable',
+      errorParams: { agent: 'claude', model: 'model-x' }
+    })
+  })
+
+  it('classifies a pre-turn model refusal without attributing a shared chat to the bot setup', async () => {
+    const completion = await failedRun(
+      { outcome: 'failure', message: '', refusal: unavailable },
+      'chat'
+    )
+
+    expect(completion).toMatchObject({
+      status: 'dispatch_failed',
+      errorCode: 'agentModelUnavailable'
+    })
+    expect(completion.errorParams).toEqual({})
+  })
+
+  it('leaves a different failure unclassified', async () => {
+    const error = 'API Error: 503 Service unavailable'
+    const completion = await failedRun({ outcome: 'failure', message: '', error })
+
+    expect(completion).toEqual({ status: 'dispatch_failed', error })
+  })
+})
 
 describe('a run answered together with another message', () => {
   it('completes: its prompt was handled in the turn that answered it', async () => {

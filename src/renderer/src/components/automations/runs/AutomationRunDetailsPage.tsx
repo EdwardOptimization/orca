@@ -1,11 +1,10 @@
-import React, { useEffect, useRef } from 'react'
-import { ArrowUpRight, ChevronLeft, ChevronRight, KeyRound, Monitor } from 'lucide-react'
+import React, { useEffect, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, ExternalLink, KeyRound, Monitor, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import CommentMarkdown from '@/components/comment-markdown/CommentMarkdown'
 import { cn } from '@/lib/class-names'
 import { hasVisibleOverlay } from '@/lib/overlay-interaction/visible-overlay'
-import { isRowActivationKey } from '@/lib/list-interaction/list-row-interaction'
 import { useIntlLocale, useTranslate } from '@/i18n/use-translate'
 import type { Automation } from '../../../../../shared/automations/automation-definition'
 import type { AutomationRun } from '../../../../../shared/automations/history/automation-run'
@@ -36,6 +35,9 @@ import {
   getAutomationRunStepKey
 } from './automation-run-identity-label'
 import { AutomationsPageFrame, AutomationsPageTitle } from '../AutomationsPageFrame'
+import type { Bot, BotAgent } from '../../../../../shared/bot-types'
+import { automationRunModelFix } from './automation-run-model-fix'
+import { AutomationRunModelPicker } from './AutomationRunModelPicker'
 import { addAppKeyListener, removeAppKeyListener } from '@/lib/keyboard/app-keyboard-router'
 
 export function AutomationRunDetailsPage({
@@ -51,6 +53,10 @@ export function AutomationRunDetailsPage({
   canRerun,
   isRerunPending,
   onRerun,
+  bot = null,
+  onEdit,
+  onPickModel,
+  modelPicker: ModelPicker = AutomationRunModelPicker,
   onOpenWorkspace,
   onSignIn,
   onReviewSetup,
@@ -70,6 +76,14 @@ export function AutomationRunDetailsPage({
   canRerun: boolean
   isRerunPending: boolean
   onRerun: () => void
+  /** The bot a bot automation runs as; its host lists the models a failed model can be swapped for. */
+  bot?: Pick<Bot, 'agent' | 'launch' | 'hostId' | 'folderWorkspaceId'> | null
+  /** Opens the automation's editor. */
+  onEdit?: () => void
+  /** Saves `model` to the automation, then reruns it; settles once both are done or one failed. */
+  onPickModel?: (agent: BotAgent, model: string) => Promise<void>
+  /** Fixtures swap in a picker with fixed models; the host's menu reads live agents. */
+  modelPicker?: typeof AutomationRunModelPicker
   onOpenWorkspace: () => void
   /** Reconnects the host that needed credentials; absent when nothing can sign in. */
   onSignIn?: () => void
@@ -108,6 +122,24 @@ export function AutomationRunDetailsPage({
   const reviewContent = setupReview?.content
   const { newer, older } = getAutomationRunNeighbors(runs, listedRun.id)
   const needsCredentials = run.status === 'skipped_needs_interactive_auth'
+  const [isModelFixPending, setIsModelFixPending] = useState(false)
+  const modelFix = onPickModel ? automationRunModelFix({ run, automation, bot, canRerun }) : null
+  const modelPicker =
+    modelFix && bot && onPickModel ? (
+      <ModelPicker
+        bot={bot}
+        agent={modelFix.agent}
+        savedModel={modelFix.savedModel}
+        disabled={isModelFixPending || isRerunPending}
+        onPick={(model) => {
+          setIsModelFixPending(true)
+          void onPickModel(modelFix.agent, model).finally(() => setIsModelFixPending(false))
+        }}
+      />
+    ) : null
+  const editLabel = t('automations.runPage.editAutomation', 'Edit automation')
+  const rerun = canRerun && automation
+  const edit = onEdit && automation
 
   const stepRef = useRef({ newer, older, onSelectRun })
   useEffect(() => {
@@ -150,16 +182,13 @@ export function AutomationRunDetailsPage({
   return (
     <AutomationsPageFrame nav={nav}>
       <div className="flex flex-col gap-4 pt-5">
-        <header className="@container/run-header min-w-0">
+        <header className="min-w-0">
           <div className="flex min-w-0 items-center gap-2.5">
             <AutomationsPageTitle>
               {formatAutomationRunLabel(run, t, intlLocale)}
             </AutomationsPageTitle>
             <AutomationRunStatusLabel status={run.status} pill />
             <span className="flex-1" />
-            {canRerun && automation ? (
-              <AutomationRunRerunButton pending={isRerunPending} onRerun={onRerun} />
-            ) : null}
             {/* Why: left reads as back in time, so Older sits left and Newer right. */}
             {(['older', 'newer'] as const).map((step) => {
               const target = step === 'newer' ? newer : older
@@ -231,43 +260,13 @@ export function AutomationRunDetailsPage({
               </span>
             ) : null}
             {triggerLabel}
-            {workspaceName ? <span aria-hidden="true">{'\u00a0·\u00a0'}</span> : dot}
             {workspaceName ? (
-              <>
-                {workspaceActionLabel ? (
-                  <span
-                    role="button"
-                    tabIndex={0}
-                    aria-label={
-                      workspaceName === workspaceActionLabel
-                        ? workspaceActionLabel
-                        : `${workspaceName}, ${workspaceActionLabel}`
-                    }
-                    className="cursor-pointer rounded-sm box-decoration-clone wrap-anywhere text-foreground outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                    onClick={onOpenWorkspace}
-                    onKeyDown={(event) => {
-                      if (isRowActivationKey(event)) {
-                        event.preventDefault()
-                        if (!event.repeat) {
-                          onOpenWorkspace()
-                        }
-                      }
-                    }}
-                  >
-                    {workspaceName}
-                    {'\u2060'}
-                    <ArrowUpRight
-                      aria-hidden="true"
-                      className="ml-0.5 inline size-3 align-[-0.125em] text-muted-foreground"
-                    />
-                    {'\u2060'}
-                  </span>
-                ) : (
-                  <span className="wrap-anywhere">{workspaceName}</span>
-                )}
+              <span className="wrap-anywhere">
                 {dot}
-              </>
+                {workspaceName}
+              </span>
             ) : null}
+            {dot}
             <span className="inline-block max-w-full wrap-anywhere">
               <Monitor aria-hidden="true" className="mr-1 inline size-3.5 align-[-0.15em]" />
               {'\u2060'}
@@ -330,6 +329,8 @@ export function AutomationRunDetailsPage({
           </div>
         ) : failed ? (
           <AutomationRunErrorNotice
+            action={modelPicker}
+            oneLine={modelPicker !== null}
             label={t('auto.components.automations.runIdentity.runFailed', 'Run failed.')}
             error={
               errorText ??
@@ -339,6 +340,59 @@ export function AutomationRunDetailsPage({
               )
             }
           />
+        ) : null}
+
+        {workspaceActionLabel || rerun || edit ? (
+          <div className="@container flex min-w-0 items-center gap-2">
+            {workspaceActionLabel ? (
+              <Button type="button" size="sm" className="min-w-0" onClick={onOpenWorkspace}>
+                <ExternalLink className="size-3.5" />
+                <span className="truncate">{workspaceActionLabel}</span>
+              </Button>
+            ) : null}
+            {rerun ? (
+              <AutomationRunRerunButton
+                pending={isRerunPending}
+                disabled={isModelFixPending}
+                onRerun={onRerun}
+              />
+            ) : null}
+            {edit ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 @max-[25rem]:hidden"
+                  aria-label={editLabel}
+                  disabled={isModelFixPending}
+                  onClick={onEdit}
+                >
+                  <Pencil className="size-3.5" />
+                  {t('automations.runPage.edit', 'Edit')}
+                </Button>
+                <div className="shrink-0 @min-[25rem]:hidden">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label={editLabel}
+                        disabled={isModelFixPending}
+                        onClick={onEdit}
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" sideOffset={4}>
+                      {editLabel}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </>
+            ) : null}
+          </div>
         ) : null}
 
         <section className="min-w-0 rounded-lg border border-border/60">

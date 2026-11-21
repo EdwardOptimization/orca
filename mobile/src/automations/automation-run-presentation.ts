@@ -2,6 +2,7 @@ import {
   AUTOMATION_RUN_FAILURE_COPY as EN,
   type AutomationRunFailureCode
 } from '../../../src/shared/automations/history/automation-run-failure-copy'
+import { tuiAgentDisplayName } from '../../../src/shared/agent-launch/catalog/tui-agent-display-names'
 import { translate } from '../i18n/mobile-i18n'
 import { getUiIntlLocale } from '../i18n/ui-intl-locale'
 import type { MobileAutomationRun } from './automation-reply-schema'
@@ -156,6 +157,15 @@ const COPY: Record<
     return typeof bot === 'string'
       ? translate('automations.runFailures.botPaused', EN.botPaused, { bot })
       : null
+  },
+  agentModelUnavailable: (params) => {
+    const agent = typeof params?.agent === 'string' ? tuiAgentDisplayName(params.agent) : null
+    const model = typeof params?.model === 'string' && params.model ? params.model : null
+    // A newer host's agent this build doesn't know is "The agent", never its raw id.
+    return translate('automations.runFailures.agentModelUnavailable', EN.agentModelUnavailable, {
+      agent: agent ?? translate('automations.runFailures.theAgent', EN.theAgent),
+      model: model ?? translate('automations.runFailures.selectedModel', EN.selectedModel)
+    })
   }
 }
 

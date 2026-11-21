@@ -5,6 +5,13 @@ import type {
   AutomationBotTarget
 } from '../../shared/automations/automation-definition'
 import type { AutomationRun } from '../../shared/automations/history/automation-run'
+import {
+  automationRunModelUnavailable,
+  type AutomationRunFailure
+} from '../../shared/automations/history/automation-run-failure-copy'
+import { readAgentSessionFailureFact } from '../../shared/agent-session/failures/agent-session-failure'
+import { tuiAgentDisplayName } from '../../shared/agent-launch/catalog/tui-agent-display-names'
+import { sanitizeCrashReportString } from '../../shared/crash-reporting/crash-report-redaction'
 import type { Bot } from '../../shared/bot-types'
 import {
   CONNECTOR_CLIENT_LIMITS,
@@ -37,7 +44,6 @@ import { requireStructuredHost, runtimeBotChats } from './bot-chat-session'
 import { runtimeBotRunNotStarted, showBotRunNotStarted } from './bot-run-not-started'
 import { isQuietBotResult } from '../../shared/bot-quiet-result'
 import { structuredAgentSessionRefusalLine } from '../../shared/agent-session/requests/structured-agent-session-turn-failure'
-import { tuiAgentDisplayName } from '../../shared/agent-launch/catalog/tui-agent-display-names'
 import { ANSWERED_TOGETHER_NOTICE } from '../../shared/automations/history/automation-run-answered-together'
 import * as resultNote from './bot-run-result-note'
 import { writeStructuredAgentSessionOrcaNote } from '../native-chat/agent-session-wire/structured-agent-session-orca-note'
@@ -137,6 +143,18 @@ const COPY = {
   } satisfies Record<BotRunUnavailable, string>
 }
 
+/** A run in a new conversation starts on target.bot's agent (its setup applied); one in a chat
+ *  continues that chat's agent, which may differ, so it is not named. */
+function modelUnavailableFailure(result: BotRunResult, detail?: string): AutomationRunFailure {
+  const runBot = result.target.runsIn === 'new' ? result.bot : undefined
+  const agent = runBot?.agent
+  const model = detail ?? runBot?.launch?.model
+  return automationRunModelUnavailable({
+    ...(agent ? { agent, agentLabel: tuiAgentDisplayName(agent) ?? agent } : {}),
+    ...(model ? { model: sanitizeCrashReportString(model) } : {})
+  })
+}
+
 /** Delivers a finished run's result and says how the run ended. */
 export async function deliverBotRunResult(
   deps: BotRunDeliveryDependencies,
@@ -165,6 +183,10 @@ export async function deliverBotRunResult(
     )
     const error = COPY.failed(ended.outcome)
     await resultNote.leave(deps, result, 'couldNotFinish', ended.message.trim() || error)
+    const failure = ended.failure ?? readAgentSessionFailureFact(ended.refusal)
+    if (failure?.kind === 'modelUnavailable') {
+      return { status: 'dispatch_failed', ...modelUnavailableFailure(result, failure.detail?.text) }
+    }
     const why =
       ended.error ??
       structuredAgentSessionRefusalLine(ended.refusal, tuiAgentDisplayName(bot.agent) ?? undefined)

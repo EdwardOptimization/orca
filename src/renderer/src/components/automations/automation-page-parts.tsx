@@ -126,23 +126,30 @@ export function AutomationRunErrorNotice({
   label,
   error,
   action,
+  oneLine,
   className
 }: {
   label: string
   error: string
   /** The one step that fixes this failure, when there is one. */
   action?: React.ReactNode
+  /** Keeps the notice to one line beside `action`; the sentence truncates, its full text a tooltip. */
+  oneLine?: boolean
   className?: string
 }): React.JSX.Element {
   return (
     <div
       role="alert"
       className={cn(
-        'flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive',
+        'flex items-center gap-x-3 gap-y-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive',
+        oneLine ? 'flex-nowrap' : 'flex-wrap',
         className
       )}
     >
-      <span className="min-w-0 flex-1">
+      <span
+        className={cn('min-w-0 flex-1', oneLine && 'truncate')}
+        title={oneLine ? `${label} ${error}` : undefined}
+      >
         <span className="font-medium">{label}</span> {error}
       </span>
       {action}

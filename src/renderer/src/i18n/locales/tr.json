@@ -23793,7 +23793,10 @@
       "botsOff": "Botlar Ayarlar’da kapalı olduğu için Orca bu çalıştırmayı atladı.",
       "botMissing": "Bu otomasyonun adına çalıştığı bot artık yok.",
       "botFolderMissing": "Botun klasörü artık kullanılamıyor.",
-      "botPaused": "{{bot}} duraklatıldığı için Orca bu çalıştırmayı atladı."
+      "botPaused": "{{bot}} duraklatıldığı için Orca bu çalıştırmayı atladı.",
+      "agentModelUnavailable": "{{agent}}, {{model}} modelini kullanamadı.",
+      "theAgent": "Ajan",
+      "selectedModel": "seçilen model"
     },
     "extraAgentArgs": {
       "errors": {
@@ -23823,6 +23826,18 @@
     },
     "botTarget": {
       "hostNeedsUpdate": "Botlarının otomasyon kullanabilmesi için {host} üzerindeki Orca sunucusunu güncelleyin."
+    },
+    "runModelFix": {
+      "model": "Model",
+      "pickModel": "Model seçin",
+      "changed": "Bu otomasyon değişti, bu yüzden model kaydedilmedi. Değiştirmek için Düzenle'yi kullanın.",
+      "saveFailed": "Model kaydedilemedi. Hiçbir şey yeniden çalıştırılmadı.",
+      "rerunFailed": "Bu otomasyonun modeli {{model}} olarak ayarlandı, ancak yeniden çalıştırma başlamadı.",
+      "saved": "Bu otomasyonun modeli {{model}} olarak ayarlandı."
+    },
+    "runPage": {
+      "edit": "Düzenle",
+      "editAutomation": "Otomasyonu düzenle"
     }
   },
   "codeHost": {

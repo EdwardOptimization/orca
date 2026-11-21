@@ -30,6 +30,12 @@ import { AutomationsPageFrame, AutomationsPageNoticeContext } from './Automation
 import { useAutomationsPageRouting } from './use-automations-page-routing'
 import { formatAutomationRunLabel } from './runs/automation-run-identity-label'
 import { automationRowHostLabel } from './listing/automation-list-host'
+import { toast } from 'sonner'
+import { fixAutomationRunModel } from './runs/automation-run-model-fix'
+import { dispatchAutomationReread } from './hosts/automation-row-action-dispatch'
+import { showAutomationForTarget } from './hosts/automation-host-client'
+import { automationRowHostId } from './automations-page-navigation'
+import type { BotAgent } from '../../../../shared/bot-types'
 
 export function AutomationsPageSurface({
   controller
@@ -157,6 +163,52 @@ export function AutomationsPageSurface({
     (selectedRecoveryHost.stableRef.selector.kind === 'ssh' ||
       selectedRecoveryHost.stableRef.authority.kind === 'runtime')
 
+  const selectedHostId = automationRowHostId(selectedRow)
+  const findRunBot = (botId: string) =>
+    bots.find((bot) => bot.id === botId && bot.hostId === (selectedHostId ?? 'local')) ?? null
+  const selectedBot = selected?.bot ? findRunBot(selected.bot.botId) : null
+  /** Saves the model to the automation as its host has it now, then reruns and shows the new run. */
+  const fixSelectedRunModel = async (agent: BotAgent, model: string): Promise<void> => {
+    const row = selectedRow
+    const run = setup.selectedAutomationRunPage
+    if (!row || !run) {
+      return
+    }
+    const automationId = row.automation.id
+    await fixAutomationRunModel(
+      {
+        reread: async () => {
+          const reread = await dispatchAutomationReread(
+            destination.automationDispatchContext,
+            { rowKey: row.key, automationId },
+            () =>
+              showAutomationForTarget(
+                destination.automationHostTargetFor(row) ?? { kind: 'local' },
+                automationId
+              )
+          )
+          if (!reread.ok) {
+            destination.reportOwnerAction(row.key, reread.notice)
+          }
+          return reread.ok ? reread.value : null
+        },
+        bot: findRunBot,
+        save: (bot) => managementActions.updateAutomationRow(row, { bot }),
+        rerun: () => runActions.rerunAutomationRun(row, run, { showToast: false }),
+        showRun: (runId) =>
+          setPendingAutomationRunNavigation({
+            automationId,
+            runId,
+            hostId: selectedHostId,
+            origin: local.runPageOrigin
+          }),
+        notify: { error: (message) => toast.error(message), success: (message) => toast(message) }
+      },
+      agent,
+      model
+    )
+  }
+
   const pendingNavigation = store.pendingAutomationRunNavigation
   const renderPage = (): React.ReactNode => {
     // Why: Back/Forward to an automation resolves through pending navigation; until it lands,
@@ -255,6 +307,9 @@ export function AutomationsPageSurface({
               runActions.rerunAutomationRun(row, selectedAutomationRunPage)
             )
           }
+          bot={selectedBot}
+          onEdit={() => runSelectedRowAction((row) => void editorActions.openEditDialog(row))}
+          onPickModel={fixSelectedRunModel}
           onOpenWorkspace={() => openRunWorkspace(selectedAutomationRunPage)}
           onSignIn={
             canSignIn ? () => hostCatalog.recover('reconnect', selectedRecoveryHost) : undefined

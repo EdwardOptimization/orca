@@ -24854,7 +24854,10 @@
       "botsOff": "設定でボットがオフになっているため、Orca はこの実行をスキップしました。",
       "botMissing": "このオートメーションを実行するボットはもう存在しません。",
       "botFolderMissing": "ボットのフォルダーは利用できなくなりました。",
-      "botPaused": "{{bot}} は一時停止中のため、Orca はこの実行をスキップしました。"
+      "botPaused": "{{bot}} は一時停止中のため、Orca はこの実行をスキップしました。",
+      "agentModelUnavailable": "{{agent}} は {{model}} を使用できませんでした。",
+      "theAgent": "エージェント",
+      "selectedModel": "選択したモデル"
     },
     "extraAgentArgs": {
       "errors": {
@@ -24884,6 +24887,18 @@
     },
     "botTarget": {
       "hostNeedsUpdate": "{host} 上のボットでオートメーションを利用できるように、Orca サーバーを更新してください。"
+    },
+    "runModelFix": {
+      "model": "モデル",
+      "pickModel": "モデルを選択",
+      "changed": "このオートメーションが変更されたため、モデルは保存されませんでした。編集から変更してください。",
+      "saveFailed": "モデルを保存できませんでした。再実行はしていません。",
+      "rerunFailed": "このオートメーションのモデルを {{model}} に設定しましたが、再実行を開始できませんでした。",
+      "saved": "このオートメーションのモデルを {{model}} に設定しました。"
+    },
+    "runPage": {
+      "edit": "編集",
+      "editAutomation": "オートメーションを編集"
     }
   },
   "codeHost": {

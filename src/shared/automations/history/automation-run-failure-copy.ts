@@ -41,10 +41,16 @@ export const AUTOMATION_RUN_FAILURE_COPY = {
   botsOffByTeam: 'Bots are turned off by your team, so Orca skipped this run.',
   botMissing: 'The bot this automation runs as no longer exists.',
   botFolderMissing: "The bot's folder is no longer available.",
-  botPaused: '{{bot}} is paused, so Orca skipped this run.'
+  botPaused: '{{bot}} is paused, so Orca skipped this run.',
+  agentModelUnavailable: "{{agent}} couldn't use {{model}}.",
+  theAgent: 'The agent',
+  selectedModel: 'the selected model'
 } as const
 
-export type AutomationRunFailureCode = keyof typeof AUTOMATION_RUN_FAILURE_COPY
+export type AutomationRunFailureCode = Exclude<
+  keyof typeof AUTOMATION_RUN_FAILURE_COPY,
+  'theAgent' | 'selectedModel'
+>
 
 /** Optional wire/persisted fields next to the English `error`; absent on older hosts and records. */
 export type AutomationRunFailureCodeFields = {
@@ -88,4 +94,31 @@ export function automationRunFailure(
         errorParams: params
       }
     : { error: template, errorCode }
+}
+
+/** Bounds the provider-derived model name a run record keeps. */
+export const AUTOMATION_RUN_MODEL_PARAM_MAX = 120
+
+/** The run's agent could not use its model. `agent` only when the run's own agent is known. */
+export function automationRunModelUnavailable({
+  agent,
+  agentLabel,
+  model
+}: {
+  agent?: string
+  agentLabel?: string
+  model?: string
+}): AutomationRunFailure {
+  const bounded = model
+    ?.replace(/[\p{Cc}\p{Cf}]/gu, ' ')
+    .trim()
+    .slice(0, AUTOMATION_RUN_MODEL_PARAM_MAX)
+  const EN = AUTOMATION_RUN_FAILURE_COPY
+  return {
+    error: EN.agentModelUnavailable
+      .replace('{{agent}}', () => agentLabel ?? EN.theAgent)
+      .replace('{{model}}', () => bounded || EN.selectedModel),
+    errorCode: 'agentModelUnavailable',
+    errorParams: { ...(agent ? { agent } : {}), ...(bounded ? { model: bounded } : {}) }
+  }
 }

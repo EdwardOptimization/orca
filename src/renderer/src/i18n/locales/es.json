@@ -24150,7 +24150,10 @@
       "botsOff": "Los bots están desactivados en Ajustes, así que Orca omitió esta ejecución.",
       "botMissing": "El bot con el que se ejecuta esta automatización ya no existe.",
       "botFolderMissing": "La carpeta del bot ya no está disponible.",
-      "botPaused": "{{bot}} está en pausa, así que Orca omitió esta ejecución."
+      "botPaused": "{{bot}} está en pausa, así que Orca omitió esta ejecución.",
+      "agentModelUnavailable": "{{agent}} no pudo usar {{model}}.",
+      "theAgent": "El agente",
+      "selectedModel": "el modelo seleccionado"
     },
     "extraAgentArgs": {
       "errors": {
@@ -24180,6 +24183,18 @@
     },
     "botTarget": {
       "hostNeedsUpdate": "Actualiza el servidor de Orca en {host} para que sus bots puedan tener automatizaciones."
+    },
+    "runModelFix": {
+      "model": "Modelo",
+      "pickModel": "Elige un modelo",
+      "changed": "Esta automatización cambió, así que no se guardó el modelo. Usa Editar para cambiarlo.",
+      "saveFailed": "No se pudo guardar el modelo. No se volvió a ejecutar nada.",
+      "rerunFailed": "Modelo establecido en {{model}} para esta automatización, pero la nueva ejecución no se inició.",
+      "saved": "Modelo establecido en {{model}} para esta automatización."
+    },
+    "runPage": {
+      "edit": "Editar",
+      "editAutomation": "Editar automatización"
     }
   },
   "codeHost": {

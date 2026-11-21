@@ -134,6 +134,7 @@ export function createAutomationManagementActions({
 
   return {
     toggleAutomation,
+    updateAutomationRow,
     reviewSkippedSetup,
     deleteAutomation,
     requestDeleteAutomation,

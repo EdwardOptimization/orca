@@ -23338,7 +23338,10 @@
       "botsOff": "設定中已關閉機器人，因此 Orca 略過了這次執行。",
       "botMissing": "執行這個自動化的機器人已不存在。",
       "botFolderMissing": "機器人的資料夾已無法使用。",
-      "botPaused": "{{bot}} 已暫停，因此 Orca 略過了這次執行。"
+      "botPaused": "{{bot}} 已暫停，因此 Orca 略過了這次執行。",
+      "agentModelUnavailable": "{{agent}} 無法使用 {{model}}。",
+      "theAgent": "代理程式",
+      "selectedModel": "所選模型"
     },
     "extraAgentArgs": {
       "errors": {
@@ -23368,6 +23371,18 @@
     },
     "botTarget": {
       "hostNeedsUpdate": "更新 {host} 上的 Orca 伺服器，讓該主機上的機器人可以使用自動化。"
+    },
+    "runModelFix": {
+      "model": "模型",
+      "pickModel": "選擇模型",
+      "changed": "此自動化已變更，因此未儲存模型。請使用編輯進行變更。",
+      "saveFailed": "無法儲存模型。未重新執行任何內容。",
+      "rerunFailed": "已將此自動化的模型設為 {{model}}，但重新執行未能開始。",
+      "saved": "已將此自動化的模型設為 {{model}}。"
+    },
+    "runPage": {
+      "edit": "編輯",
+      "editAutomation": "編輯自動化"
     }
   },
   "codeHost": {

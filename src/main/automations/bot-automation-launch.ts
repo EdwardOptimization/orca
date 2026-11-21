@@ -271,7 +271,7 @@ export function createBotAutomationDispatcher(
             run,
             bot: target.bot,
             target: {
-              runsIn,
+              runsIn: route.kind === 'owner' ? 'chat' : runsIn,
               resultsTo,
               letBotReact: automation.bot?.letBotReact === true,
               ...(route.kind === 'take' ? {} : { threadPost: route.conversation })
