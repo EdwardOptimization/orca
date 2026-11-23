@@ -259,6 +259,7 @@ export function NativeChatStructuredSessionStatus(props: {
               ownerActionsAvailable && dialog.result?.ownerActionsAvailable !== false
             }
             result={dialog.result}
+            row={dialog.row}
             error={dialog.error}
             onClose={() => {
               const { opener } = dialog

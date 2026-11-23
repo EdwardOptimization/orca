@@ -68,7 +68,8 @@ export function WorkerDockHeader({
         ) : (
           <Bot aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
         )}
-        <span className="min-w-0 flex-1 truncate">
+        {/* A narrow strip cuts the count rather than wrapping it; the tooltip keeps it whole. */}
+        <span className="min-w-0 flex-1 truncate" title={count || undefined}>
           {count ||
             (incomplete
               ? t('components.native-chat.workerDock.unavailable', 'Worker status unavailable')

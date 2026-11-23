@@ -15,6 +15,8 @@ import { WorkerDockHeader } from './WorkerDockHeader'
 import { useWorkerDockScroll } from './use-worker-dock-scroll'
 import { workerDockAnchorIndex, type WorkerDockScrollAnchor } from './worker-dock-scroll-anchor'
 import { workerDockRosterBudget } from './worker-dock-roster-budget'
+import { useWorkerDockListHeight } from './worker-dock-list-height'
+import { WorkerDockResizeHandle } from './WorkerDockResizeHandle'
 
 export function WorkerDockRoster(props: {
   identities: readonly {
@@ -47,6 +49,7 @@ export function WorkerDockRoster(props: {
   const viewport = useRef<HTMLDivElement>(null)
   const summary = useRef<HTMLButtonElement>(null)
   const anchor = useRef<WorkerDockScrollAnchor | null>(null)
+  const preferred = useWorkerDockListHeight()
   const [held, setHeld] = useState<
     | readonly {
         id: string
@@ -100,8 +103,7 @@ export function WorkerDockRoster(props: {
         heading:
           index === 0 ||
           workerDockNeedsAttention(identities[index - 1].state) !==
-            workerDockNeedsAttention(row.state),
-        lead: index === 0 && workerDockNeedsAttention(row.state)
+            workerDockNeedsAttention(row.state)
       })),
     [identities]
   )
@@ -111,11 +113,7 @@ export function WorkerDockRoster(props: {
     [items, active, focused]
   )
   const rowKeys = useMemo(() => items.map((item) => ({ key: item.id })), [items])
-  const estimateSize = useCallback(
-    (index: number) =>
-      (items[index].lead ? 120 : props.narrow ? 64 : 40) + (items[index].heading ? 24 : 0),
-    [items, props.narrow]
-  )
+  const estimateSize = useCallback((index: number) => 36 + (items[index].heading ? 24 : 0), [items])
   const extractRange = useCallback(
     (range: Parameters<typeof defaultRangeExtractor>[0]) => {
       const indices = defaultRangeExtractor(range)
@@ -144,10 +142,10 @@ export function WorkerDockRoster(props: {
   const measure = useLatestHandler(() => {
     const element = viewport.current
     if (element) {
-      setBudget(workerDockRosterBudget(root.current, element, props.narrow, orderHeld))
+      setBudget(workerDockRosterBudget(root.current, props.narrow, orderHeld, preferred))
     }
   })
-  useLayoutEffect(measure, [measure, props.expanded, props.narrow, orderHeld, items])
+  useLayoutEffect(measure, [measure, props.expanded, props.narrow, orderHeld, items, preferred])
   const shown = total > 0 || identities.length > 0 || Boolean(props.incomplete)
   useEffect(() => {
     const pane = root.current?.closest('[data-native-chat-root]')
@@ -246,7 +244,7 @@ export function WorkerDockRoster(props: {
     <div
       ref={root}
       data-native-chat-background-tasks="true"
-      className="min-h-0 min-w-0 overflow-hidden rounded-xl border border-border bg-chat-canvas bg-[linear-gradient(var(--color-chat-composer-surface),var(--color-chat-composer-surface))] text-xs text-muted-foreground shadow-sm"
+      className="relative min-h-0 min-w-0 overflow-hidden rounded-xl border border-border bg-chat-canvas bg-[linear-gradient(var(--color-chat-composer-surface),var(--color-chat-composer-surface))] text-xs text-muted-foreground shadow-sm"
       onPointerEnter={hold}
       onPointerOverCapture={(event) => {
         const row =
@@ -293,6 +291,7 @@ export function WorkerDockRoster(props: {
         })
       }
     >
+      {props.expanded ? <WorkerDockResizeHandle viewport={viewport} /> : null}
       <WorkerDockHeader
         narrow={props.narrow}
         expanded={props.expanded}
@@ -364,7 +363,6 @@ export function WorkerDockRoster(props: {
                     start={item.start}
                     measure={rowWindow.measureRow}
                     narrow={props.narrow}
-                    compact={props.compact}
                     mixed={mixed}
                     modelColumn={modelColumn}
                     visible={props.visible}

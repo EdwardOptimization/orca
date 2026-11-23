@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { containWorkerDockWheel } from './worker-dock-wheel'
 
 const GestureContext = createContext(false)
 export function useWorkerDockGestureHeld(): boolean {
@@ -8,6 +9,9 @@ export function useWorkerDockGestureHeld(): boolean {
 /** Defer structural dock updates through pointerup/click and a complete Enter/Space gesture. */
 export function NativeChatWorkerDockFrame({ children }: { children: ReactNode }) {
   const [held, setHeld] = useState(false)
+  const frame = useRef<HTMLDivElement>(null)
+  // The strip's list scrolls on its own; at either end the wheel stops there, not in the chat.
+  useEffect(() => containWorkerDockWheel(frame.current), [])
   useEffect(() => {
     if (!held) {
       return
@@ -38,10 +42,15 @@ export function NativeChatWorkerDockFrame({ children }: { children: ReactNode })
   return (
     <GestureContext.Provider value={held}>
       <div
+        ref={frame}
         data-native-chat-worker-dock=""
         className="mx-auto w-full max-w-(--chat-content-max-width) shrink-0 px-3 pt-2 sm:px-4 [&:not(:has([data-native-chat-background-tasks],[data-native-chat-worker-approvals]))]:hidden"
         onPointerDownCapture={(event) => {
-          if (event.button === 0) {
+          // Resizing is not a press on a row; holding the structure would freeze the list.
+          if (
+            event.button === 0 &&
+            !(event.target instanceof Element && event.target.closest('[data-worker-dock-resize]'))
+          ) {
             pointer.current = event.pointerId
             setHeld(true)
           }

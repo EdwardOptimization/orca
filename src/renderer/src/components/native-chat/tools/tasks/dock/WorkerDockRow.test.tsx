@@ -120,3 +120,64 @@ it('keeps a focused Stop unavailable when its accepted failure arrives', () => {
   fireEvent.click(target)
   expect(action).not.toHaveBeenCalled()
 })
+
+it('draws one line: the shared running spinner, the prompt once, and no error text', () => {
+  const prompt = 'Audit the release checklist for the billing service and list gaps, changing no...'
+  const { container } = render(
+    <TooltipProvider>
+      <WorkerDockRow
+        row={{ ...running, name: prompt, title: prompt }}
+        narrow={false}
+        mixed={false}
+        modelColumn={false}
+        visible
+        pending={false}
+        onOpen={() => {}}
+        onAction={() => {}}
+      />
+    </TooltipProvider>
+  )
+  expect(container.querySelector('[data-agent-spinner]')).toHaveClass('border-agent-working')
+  expect(screen.getAllByText(prompt)).toHaveLength(1)
+  expect(container.querySelector('[data-worker-dock-question]')).toBeNull()
+  cleanup()
+  render(
+    <TooltipProvider>
+      <WorkerDockRow
+        row={{ ...running, state: 'unexpected', reason: 'Raw error orca_session_id:1.' }}
+        narrow={false}
+        mixed={false}
+        modelColumn={false}
+        visible
+        pending={false}
+        onOpen={() => {}}
+        onAction={() => {}}
+      />
+    </TooltipProvider>
+  )
+  expect(screen.queryByText(/orca_session_id/)).toBeNull()
+  expect(screen.queryByRole('button', { name: /^Show/ })).toBeNull()
+  expect(screen.getByText('Stopped unexpectedly')).toHaveClass('text-destructive')
+})
+
+it('gives a narrow row to the name and keeps the state in its tooltip', () => {
+  render(
+    <TooltipProvider>
+      <WorkerDockRow
+        row={{ ...running, state: 'unexpected' }}
+        narrow
+        mixed={false}
+        modelColumn={false}
+        visible
+        pending={false}
+        onOpen={() => {}}
+        onAction={() => {}}
+      />
+    </TooltipProvider>
+  )
+  expect(document.querySelector('[data-worker-dock-state]')).toBeNull()
+  const open = screen.getByRole('button', {
+    name: /^Verifier · Review journal · Stopped unexpectedly/
+  })
+  expect(open.getAttribute('title')).toMatch(/Stopped unexpectedly$/)
+})

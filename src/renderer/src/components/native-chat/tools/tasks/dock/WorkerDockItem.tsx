@@ -1,7 +1,6 @@
 import { useTranslate } from '@/i18n/use-translate'
 import { workerDockNeedsAttention } from '../../../../../../../shared/orchestration/dock/worker-dock'
 import { WorkerDockRow, type WorkerDockRowView } from './WorkerDockRow'
-import { cn } from '@/lib/class-names'
 
 export function WorkerDockItem({
   index,
@@ -11,7 +10,6 @@ export function WorkerDockItem({
   start,
   measure,
   narrow,
-  compact,
   mixed,
   modelColumn,
   visible,
@@ -21,13 +19,12 @@ export function WorkerDockItem({
   onAction
 }: {
   index: number
-  identity: { id: string; state: WorkerDockRowView['state']; heading: boolean; lead: boolean }
+  identity: { id: string; state: WorkerDockRowView['state']; heading: boolean }
   row: WorkerDockRowView | undefined
   small: boolean
   start: number
   measure: (element: HTMLDivElement | null) => void
   narrow: boolean
-  compact?: boolean
   mixed: boolean
   modelColumn: boolean
   visible: boolean
@@ -50,13 +47,8 @@ export function WorkerDockItem({
       }}
     >
       {identity.heading ? (
-        <div
-          className={cn(
-            'flex h-6 items-center justify-between bg-muted px-4 text-2xs text-muted-foreground',
-            narrow ? 'pr-11' : 'pr-14'
-          )}
-        >
-          <h3 className="font-medium">
+        <div className="flex h-6 items-center justify-between bg-muted px-4 pr-12 text-2xs text-muted-foreground [@media(pointer:coarse)]:pr-13">
+          <h3 className="min-w-0 truncate font-medium">
             {workerDockNeedsAttention(identity.state)
               ? t('components.native-chat.workerDock.attention', 'Needs attention')
               : t('components.native-chat.workerDock.openWork', 'Open work')}
@@ -64,8 +56,11 @@ export function WorkerDockItem({
               ? ` · ${t('components.native-chat.workerDock.orderHeld', 'Order held')}`
               : ''}
           </h3>
+          {/* Its right edge sits on the rows' age column at every width. */}
           {index === 0 ? (
-            <span>{t('components.native-chat.workerDock.statusChanged', 'Status changed')}</span>
+            <span className="shrink-0 whitespace-nowrap">
+              {t('components.native-chat.workerDock.statusChanged', 'Status changed')}
+            </span>
           ) : null}
         </div>
       ) : null}
@@ -73,8 +68,6 @@ export function WorkerDockItem({
         <WorkerDockRow
           row={row}
           narrow={narrow}
-          compact={compact}
-          lead={identity.lead}
           mixed={mixed}
           modelColumn={modelColumn}
           visible={visible}
@@ -83,7 +76,7 @@ export function WorkerDockItem({
           onAction={onAction}
         />
       ) : (
-        <div className="min-h-10 px-4 py-2">
+        <div className="min-h-9 px-4 py-2">
           {t('components.native-chat.workerDock.loadingWorker', 'Loading worker…')}
         </div>
       )}

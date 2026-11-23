@@ -1,8 +1,8 @@
 import { useIntlLocale, useTranslate } from '@/i18n/use-translate'
 import { workerDockKindLabel, workerDockStateLabel } from './worker-dock-labels'
 import { memo } from 'react'
-import { Button } from '@/components/ui/button'
-import { AgentStateDot, type AgentDotState } from '@/components/agent/status/AgentStateDot'
+import { AgentStateDot } from '@/components/agent/status/AgentStateDot'
+import { workerDockDotState } from './worker-dock-status-dot'
 import { WorkerDockRowAction } from './WorkerDockRowAction'
 import { useNowSnapshot } from '@/lib/window-activity/use-now'
 import { formatShortTimeAgo } from '@/lib/time-format/short-time-ago'
@@ -11,7 +11,7 @@ import { cn } from '@/lib/class-names'
 import type { WorkerDockEntry } from '../../../../../../../shared/orchestration/dock/worker-dock'
 import { subagentModelLabel } from '../../../../../../../shared/native-chat/transcript/subagents/native-chat-subagent-entry-detail'
 
-function Age({ at, visible, fit }: { at: number | null; visible: boolean; fit?: boolean }) {
+function Age({ at, visible }: { at: number | null; visible: boolean }) {
   const t = useTranslate()
   const locale = useIntlLocale()
   const label = useNowSnapshot(
@@ -21,10 +21,7 @@ function Age({ at, visible, fit }: { at: number | null; visible: boolean; fit?: 
   )
   return (
     <span
-      className={cn(
-        'shrink-0 text-right text-xs tabular-nums text-muted-foreground',
-        !fit && 'w-11'
-      )}
+      className="w-11 shrink-0 text-right text-xs tabular-nums text-muted-foreground"
       title={
         at === null
           ? t('components.native-chat.workerDock.timeUnavailable', 'Status time unavailable')
@@ -41,35 +38,19 @@ export type WorkerDockRowView = WorkerDockEntry & {
   /** The open question a needs-you worker asked, shown in full on the lead row. */
   question?: string
 }
-/** The shared agent-state glyph for a dock row; null when the state can't be read, so nothing shows. */
-function workerDockDotState(row: WorkerDockRowView): AgentDotState | null {
-  if (row.retired) {
-    return 'done'
-  }
-  switch (row.state) {
-    case 'starting':
-    case 'running':
-    case 'saving':
-    case 'stopping':
-      return 'working'
-    case 'waiting':
-    case 'coordinator':
-    case 'needs-you':
-      return 'waiting'
-    case 'idle':
-      return 'idle'
-    case 'failed':
-    case 'unexpected':
-      return 'failed'
-    case 'unavailable':
-      return null
-  }
+/** The title only when it adds to the name: a worker named after its own prompt shows it once. */
+export function workerDockDistinctTitle(name: string, title: string): string | null {
+  const stem = (value: string) => value.replace(/(?:\.\.\.|…)\s*$/, '').trim()
+  const a = stem(name)
+  const b = stem(title)
+  return !b || a.startsWith(b) || b.startsWith(a) ? null : title
 }
+
+/** One line per worker: state glyph, name, what it waits on or works at, state, age, action. The
+ *  full prompt and any error live in the card the row opens. */
 export const WorkerDockRow = memo(function WorkerDockRow({
   row,
   narrow,
-  compact = false,
-  lead = false,
   mixed,
   modelColumn,
   visible,
@@ -79,9 +60,6 @@ export const WorkerDockRow = memo(function WorkerDockRow({
 }: {
   row: WorkerDockRowView
   narrow: boolean
-  compact?: boolean
-  /** The newest needs-attention row: its full question and its action, not one truncated line. */
-  lead?: boolean
   mixed: boolean
   modelColumn: boolean
   visible: boolean
@@ -109,166 +87,72 @@ export const WorkerDockRow = memo(function WorkerDockRow({
     : row.state === 'needs-you'
       ? 'text-chat-warning'
       : 'text-muted-foreground'
-  const dot = workerDockDotState(row)
+  const distinct = workerDockDistinctTitle(row.name, row.title)
+  // A name cut from the prompt reads in full from the longer of the two.
+  const primary = distinct || row.title.length <= row.name.length ? row.name : row.title
+  const secondary = row.question ?? distinct
   // A remote chat's worker is shown, not driven, here: its row says where to act instead.
-  const remote = row.kind === 'worker' && row.ownerActionsAvailable === false
-  const tooltip = `${row.name} · ${row.title}${row.model ? ` · ${row.model}` : ''}${row.startedAt ? t('components.native-chat.workerDock.startedAt', ' · Started {{time}} · {{elapsed}} elapsed', { time: new Date(row.startedAt).toLocaleString(locale), elapsed }) : ''}${t('components.native-chat.workerDock.contactUnavailable', ' · Last confirmed contact unavailable')}${remote ? ` · ${t('components.native-chat.workerDock.remoteOwner', 'Stop or clear this from the computer it runs on')}` : ''}`
-  const reason =
-    (failed || row.state === 'unavailable' || row.state === 'stopping') && row.reason
-      ? row.reason
+  const remote =
+    row.kind === 'worker' && row.ownerActionsAvailable === false
+      ? t(
+          'components.native-chat.workerDock.remoteOwner',
+          'Stop or clear this from the computer it runs on'
+        )
       : null
-  // An unreadable state keeps the glyph column's width but draws nothing.
-  const icon = dot ? (
-    <AgentStateDot
-      state={dot}
-      size="sm"
-      title={null}
-      className={cn((lead || narrow) && 'mt-1.5')}
-    />
-  ) : (
-    <span aria-hidden="true" className="size-2.5 shrink-0" />
-  )
+  const tooltip = `${[primary, secondary, row.model].filter(Boolean).join(' · ')}${row.startedAt ? t('components.native-chat.workerDock.startedAt', ' · Started {{time}} · {{elapsed}} elapsed', { time: new Date(row.startedAt).toLocaleString(locale), elapsed }) : ''}${t('components.native-chat.workerDock.contactUnavailable', ' · Last confirmed contact unavailable')}${remote ? ` · ${remote}` : ''}`
+  const label = [
+    mixed ? workerDockKindLabel(t, row.kind) : '',
+    row.state === 'running' && !row.retired ? '' : state
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  const dot = workerDockDotState(row.state, row.retired)
   return (
     <div
       data-worker-dock-row={row.id}
-      data-worker-dock-lead={lead ? '' : undefined}
-      className={cn(
-        'group/worker relative flex min-w-0 items-start text-foreground',
-        // The fill spans the Stop column too, so no strip stays unfilled.
-        !lead && 'hover:bg-accent'
-      )}
+      className="group/worker relative flex min-w-0 items-center text-foreground hover:bg-accent has-[[data-worker-dock-open]:focus-visible]:bg-accent"
     >
-      {lead ? (
-        <div
-          className={cn(
-            'flex min-w-0 flex-1 items-start gap-2 py-2 pl-4',
-            narrow ? 'pr-0' : 'pr-4'
-          )}
-          title={row.question ? `${row.question}\n${tooltip}` : tooltip}
-        >
-          {icon}
-          <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-            <div className="flex w-full min-w-0 items-baseline gap-2">
-              <span className="max-w-30 shrink-0 truncate text-sm font-medium">{row.name}</span>
-              <span
-                data-worker-dock-state=""
-                className={cn('min-w-0 flex-1 truncate text-xs', stateTone)}
-              >
-                {mixed ? `${workerDockKindLabel(t, row.kind)} · ` : ''}
-                {state}
-              </span>
-              <Age at={row.changedAt} visible={visible} fit />
-            </div>
-            <p
-              data-worker-dock-question=""
-              className={cn('text-sm break-words', compact ? 'line-clamp-2' : 'line-clamp-3')}
-            >
-              {row.question ?? row.title}
-            </p>
-            {reason ? (
-              <p data-worker-dock-reason="" className="line-clamp-2 text-xs text-muted-foreground">
-                {reason}
-              </p>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              data-worker-dock-open={row.id}
-              aria-label={t('components.native-chat.workerDock.showName', 'Show {{name}}', {
-                name: row.name
-              })}
-              onClick={(event) => onOpen(row, event.currentTarget)}
-            >
-              {t('components.native-chat.workerDock.show', 'Show')}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          data-worker-dock-open={row.id}
-          className={cn(
-            'flex min-w-0 flex-1 items-start gap-2 px-4 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
-            narrow ? 'pr-0' : 'items-center'
-          )}
-          aria-label={`${row.name} · ${row.title}${state ? ` · ${state}` : ''}${row.reason ? ` · ${row.reason}` : ''}${remote ? ` · ${t('components.native-chat.workerDock.remoteOwner', 'Stop or clear this from the computer it runs on')}` : ''}`}
-          title={tooltip}
-          onClick={(event) => onOpen(row, event.currentTarget)}
-        >
-          {icon}
-          <span
-            className={cn(
-              'min-w-0 flex-1',
-              !narrow && 'flex items-center gap-2',
-              compact && narrow && 'flex flex-wrap items-baseline gap-x-2'
-            )}
-          >
-            <span
-              className={cn(
-                'flex min-w-0 gap-x-2',
-                narrow ? (compact ? 'contents' : 'flex-col') : 'flex-1 items-baseline'
-              )}
-            >
-              <span className="max-w-30 shrink-0 truncate text-sm font-medium">{row.name}</span>
-              <span
-                className={cn(
-                  'min-w-0 text-sm',
-                  narrow ? (compact ? 'hidden' : 'line-clamp-1') : 'truncate'
-                )}
-              >
-                {row.title}
-              </span>
-            </span>
-            <span
-              className={cn(
-                !narrow && 'flex min-w-0 items-baseline gap-2',
-                compact && narrow && 'contents'
-              )}
-            >
-              {(mixed || row.state !== 'running' || row.retired) && (mixed || state) ? (
-                <span
-                  data-worker-dock-state=""
-                  className={cn(
-                    'text-xs',
-                    stateTone,
-                    narrow ? (compact ? 'shrink-0' : 'block') : 'max-w-40 truncate'
-                  )}
-                >
-                  {[
-                    mixed ? workerDockKindLabel(t, row.kind) : '',
-                    row.state === 'running' && !row.retired ? '' : state
-                  ]
-                    .filter(Boolean)
-                    .join(' · ')}
-                </span>
-              ) : null}
-              {reason ? (
-                <span
-                  data-worker-dock-reason=""
-                  className={cn(
-                    'text-xs text-muted-foreground',
-                    narrow
-                      ? compact
-                        ? 'w-full line-clamp-2'
-                        : 'block line-clamp-2'
-                      : 'min-w-0 max-w-48 truncate'
-                  )}
-                >
-                  {reason}
-                </span>
-              ) : null}
-            </span>
-          </span>
-          {modelColumn && !narrow && (row.model || !unreadable) ? (
-            <span className="max-w-25 truncate text-xs text-muted-foreground">
-              {row.model ? subagentModelLabel(row.model) : '—'}
+      <button
+        type="button"
+        data-worker-dock-open={row.id}
+        className="flex min-h-9 min-w-0 flex-1 items-center gap-2 py-1.5 pr-2 pl-4 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset [@media(pointer:coarse)]:min-h-11"
+        aria-label={[primary, distinct, state, row.reason, remote].filter(Boolean).join(' · ')}
+        title={`${row.question ? `${row.question}\n` : ''}${tooltip}${narrow && state ? `\n${state}` : ''}`}
+        onClick={(event) => onOpen(row, event.currentTarget)}
+      >
+        {/* An unreadable state keeps the glyph column's width but draws nothing. */}
+        {dot ? (
+          <AgentStateDot state={dot} size="sm" title={null} className="mx-0.5" />
+        ) : (
+          <span aria-hidden="true" className="mx-0.5 size-2.5 shrink-0" />
+        )}
+        <span className="min-w-16 flex-1 truncate text-sm">
+          <span className="font-medium">{primary}</span>
+          {secondary ? (
+            <span data-worker-dock-question="" className="text-muted-foreground">
+              {' '}
+              {secondary}
             </span>
           ) : null}
-          <Age at={row.changedAt} visible={visible} />
-        </button>
-      )}
-      <WorkerDockRowAction row={row} narrow={narrow} pending={pending} onAction={onAction} />
+        </span>
+        {/* A narrow row gives the name the room; the dot's color and the section heading carry
+            the state, and the tooltip and label keep its words. */}
+        {label && !narrow ? (
+          <span
+            data-worker-dock-state=""
+            className={cn('min-w-0 max-w-40 truncate text-xs', stateTone)}
+          >
+            {label}
+          </span>
+        ) : null}
+        {modelColumn && !narrow && (row.model || !unreadable) ? (
+          <span className="max-w-25 shrink-0 truncate text-xs text-muted-foreground">
+            {row.model ? subagentModelLabel(row.model) : '—'}
+          </span>
+        ) : null}
+        <Age at={row.changedAt} visible={visible} />
+      </button>
+      <WorkerDockRowAction row={row} pending={pending} onAction={onAction} />
     </div>
   )
 })
