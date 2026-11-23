@@ -105,8 +105,9 @@ export function WorkerDockResultDialog({
   const raw = result ? (status?.failed ? result.body : null) : error
   const actionError = result ? error : null
   const reason = raw ? workerDockReasonLine(raw) : null
-  // The reason line clamps at two lines, so a long error stays reachable even as one sentence.
-  const details = raw !== null && (raw.trim() !== reason || raw.length > 120)
+  // The reason line clamps at two lines, and how much fits depends on the glyphs and the width,
+  // not the length: any error keeps its full text one click away.
+  const details = Boolean(raw?.trim())
   return (
     <Dialog
       open={result !== null || error !== null}

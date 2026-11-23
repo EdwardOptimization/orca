@@ -87,6 +87,15 @@ it('keeps one long error sentence reachable behind Show details', () => {
   expect(document.querySelector('pre')).toHaveTextContent(long)
 })
 
+it('keeps a short error of wide glyphs reachable behind Show details', () => {
+  // One sentence well under 120 characters that still overflows two lines in a narrow card.
+  const wide =
+    'ワークツリーの作成が三分を超えたため、Gitを停止しました。環境変数を設定してからOrcaを再起動し、もう一度このワーカーを実行してください。'
+  card({ ...result, body: wide })
+  fireEvent.click(screen.getByRole('button', { name: 'Show details' }))
+  expect(document.querySelector('pre')).toHaveTextContent(wide)
+})
+
 it('keeps the report readable when Show in dock again fails', () => {
   card(
     {
