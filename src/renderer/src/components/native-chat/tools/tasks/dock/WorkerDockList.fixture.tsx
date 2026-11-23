@@ -15,7 +15,7 @@ const minutes = (count: number) => Date.now() - count * 60_000
 const PROMPT =
   'You are a read-only audit worker for the billing release checklist. Change nothing, push no...'
 const ERROR =
-  'Creating the worktree took longer than 180 seconds, so Orca stopped Git. To allow more time, set ORCA_WORKTREE_ADD_TIMEOUT_MS (milliseconds, up to 1800000) in the environment that starts Orca on the machine running Git (the remote host for SSH or `orca serve` workspaces), then restart Orca there. Abandoned by orca_session_id:0f0e0d0c-1111-4222-8333-944455556666.'
+  'Creating the worktree took longer than 180 seconds, so Orca stopped Git. To allow more time, set ORCA_WORKTREE_ADD_TIMEOUT_MS (milliseconds, up to 1800000) in the environment that starts Orca on the machine running Git (the remote host for SSH or `orca serve` workspaces), then restart Orca there.'
 
 function worker(
   index: number,
@@ -75,23 +75,9 @@ const reported: WorkerDockRowView[] = [
   )
 ]
 
-function dock(list: readonly WorkerDockRowView[], questions = 0) {
+function dock(list: readonly WorkerDockRowView[]) {
   return (
     <NativeChatWorkerDockFrame>
-      {questions ? (
-        // Stand-ins for pinned worker questions: the frame only reads these markers.
-        <div data-native-chat-worker-approvals="">
-          {Array.from({ length: questions }, (_, index) => (
-            <div
-              key={index}
-              data-native-chat-worker-question-summary=""
-              className="flex h-11 items-center px-4 text-sm text-foreground"
-            >
-              Approve step {index + 1} of the audit?
-            </div>
-          ))}
-        </div>
-      ) : null}
       <NativeChatBackgroundTasksStatus
         sessionId={SOURCE}
         tasks={[]}
@@ -115,14 +101,13 @@ function dock(list: readonly WorkerDockRowView[], questions = 0) {
             ownerActionsAvailable
           })
         )}
-        ownerActionsAvailable
       />
     </NativeChatWorkerDockFrame>
   )
 }
 
 // A chat pane: a transcript that scrolls on its own above the composer and its worker list.
-function chat(list: readonly WorkerDockRowView[] = reported, questions = 0) {
+function chat(list: readonly WorkerDockRowView[] = reported) {
   return (
     <div
       data-native-chat-root=""
@@ -141,7 +126,7 @@ function chat(list: readonly WorkerDockRowView[] = reported, questions = 0) {
         ))}
       </div>
       <div className="m-3 mt-0 rounded-xl border border-chat-composer-border bg-chat-composer-surface p-1.5 shadow-xs">
-        {dock(list, questions)}
+        {dock(list)}
         <p className="px-2 py-2 text-sm text-muted-foreground">
           Ask anything, / for commands, @ for context
         </p>
@@ -187,13 +172,6 @@ export const reportedListHandleFocus = defineFixture({
   interact: (frame) => {
     frame.querySelector<HTMLElement>('[data-worker-dock-resize]')?.focus()
   }
-})
-
-// Pinned questions make the whole dock one scroller; its top edge still drags it taller.
-export const pinnedQuestions = defineFixture({
-  width: 720,
-  setup: resetHeight,
-  render: () => chat(reported, 3)
 })
 
 const failedResult: WorkerDockResult = {

@@ -18,8 +18,12 @@ export function workerDockRosterBudget(
   const short = paneHeight < 520
   const nominal = narrow ? (short ? 120 : 200) : short ? 100 : 160
   const inDock = Boolean(root?.closest('[data-native-chat-worker-dock]'))
+  // The strip's header, its order-held bar and its 1px top and bottom borders share the cap.
   const room = (grown: boolean) =>
-    Math.max(44, workerDockFrameCap(paneHeight, grown) - (narrow ? 44 : 36) - (orderHeld ? 28 : 0))
+    Math.max(
+      44,
+      workerDockFrameCap(paneHeight, grown) - (narrow ? 44 : 36) - (orderHeld ? 28 : 0) - 2
+    )
   const fallback = inDock ? Math.min(nominal, room(false)) : nominal
   if (preferred === null) {
     return fallback

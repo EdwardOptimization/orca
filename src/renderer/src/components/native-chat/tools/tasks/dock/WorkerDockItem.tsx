@@ -56,8 +56,9 @@ export function WorkerDockItem({
               ? ` · ${t('components.native-chat.workerDock.orderHeld', 'Order held')}`
               : ''}
           </h3>
-          {/* Its right edge sits on the rows' age column at every width. */}
-          {index === 0 ? (
+          {/* Its right edge sits on the rows' age column. A narrow strip leaves the heading the
+              room: the age column reads on its own there. */}
+          {index === 0 && !narrow ? (
             <span className="shrink-0 whitespace-nowrap">
               {t('components.native-chat.workerDock.statusChanged', 'Status changed')}
             </span>
