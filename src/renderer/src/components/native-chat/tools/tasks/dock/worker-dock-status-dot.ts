@@ -43,7 +43,8 @@ export function workerDockResultDotState(
       return 'failed'
     case 'stopped':
       return 'interrupted'
-    default:
+    case 'succeeded':
+    case undefined:
       return 'done'
   }
 }
