@@ -1,5 +1,4 @@
 import { defineFixture } from '../../../component-fixtures/component-fixture'
-import { fixtureCos } from '../../../component-fixtures/fixture-bot-panel'
 import { makeFolderWorkspace } from '@/store/folder-workspaces/folder-workspace.test-fixture'
 import {
   now,
@@ -10,61 +9,62 @@ import {
   pr,
   LINKS,
   store,
-  header,
-  narrowHeader,
-  chip,
+  linkBlock,
+  narrowLinkBlock,
+  rowButton,
+  sampleBot,
   hover,
   hoverElement,
   signedIn,
   PaneProbe,
   wait,
   escape
-} from './bot-item-link-chips-fixtures'
+} from './bot-item-link-peeks-fixture'
 
-/** Hovering an open PR chip whose checks fail: the GitHub card, not the text tooltip. */
+/** Hovering an open PR row whose checks fail: the GitHub card, not the text tooltip. */
 export const hoverOpenPr = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
-  render: () => header(),
-  interact: (frame) => hover(frame, '#41230')
+  render: () => linkBlock(),
+  interact: (frame) => hover(frame, 'Share dialog: view-only links')
 })
 
 export const hoverMergedPr = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
-  render: () => header(),
-  interact: (frame) => hover(frame, '#41188')
+  render: () => linkBlock(),
+  interact: (frame) => hover(frame, 'Share dialog scaffolding')
 })
 
 export const hoverIssue = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
-  render: () => header(),
-  interact: (frame) => hover(frame, '#41201')
+  render: () => linkBlock(),
+  interact: (frame) => hover(frame, 'Share links open as editable')
 })
 
-/** Tab onto a chip: the same card opens. */
+/** Tab onto a row: the same card opens. */
 export const keyboardFocus = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
-  render: () => header(),
+  render: () => linkBlock(),
   interact: async (frame) => {
-    chip(frame, '#41230').focus()
+    rowButton(frame, 'Share dialog: view-only links').focus()
     await new Promise((resolve) => setTimeout(resolve, 700))
   }
 })
 
-/** A narrow item pane: the chip still truncates and the card stays inside the window. */
+/** A narrow item pane: the row still truncates and the card stays inside the window. */
 export const narrowPane = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
-  render: () => narrowHeader(),
-  interact: (frame) => hover(frame, '#41230')
+  render: () => narrowLinkBlock(),
+  interact: (frame) => hover(frame, 'Share dialog: view-only links')
 })
 
 /** An open PR with passing checks. */
@@ -73,72 +73,68 @@ export const hoverPassingPr = defineFixture({
   store,
   setup: signedIn(),
   render: () =>
-    header([
+    linkBlock([
       pr(41236, 'open', 'success', 'Share link API with expiring tokens'),
       pr(41230, 'open', 'failure', 'Share dialog: view-only links by default')
     ]),
-  interact: (frame) => hover(frame, '#41236')
+  interact: (frame) => hover(frame, 'Share link API')
 })
 
-/** While the lookup runs: what the chip knows, not a skeleton. */
+/** While the lookup runs: what the row knows, not a skeleton. */
 export const lookupLoading = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
-  render: () => header([pr(LOADING, 'open', 'pending', 'Share dialog analytics events')]),
-  interact: (frame) => hover(frame, `#${LOADING}`)
+  render: () => linkBlock([pr(LOADING, 'open', 'pending', 'Share dialog analytics events')]),
+  interact: (frame) => hover(frame, 'Share dialog analytics events')
 })
 
-/** The lookup fails: the card says what the chip knows (title, state, checks, repo). */
+/** The lookup fails: the card says what the row knows (title, state, checks, repo). */
 export const lookupFails = defineFixture({
   width: 720,
   store,
   setup: signedIn('fail'),
-  render: () => header([pr(FAILING, 'open', 'pending', 'Share dialog keyboard shortcuts')]),
-  interact: (frame) => hover(frame, `#${FAILING}`)
+  render: () => linkBlock([pr(FAILING, 'open', 'pending', 'Share dialog keyboard shortcuts')]),
+  interact: (frame) => hover(frame, 'Share dialog keyboard shortcuts')
 })
 
-/** "+N": a GitHub row in its popover shows the same card. */
+/** A GitHub row revealed by expanding the Links block still previews on hover. */
 export const overflowRow = defineFixture({
   width: 420,
   store,
   setup: signedIn(),
-  render: () => header(),
+  render: () =>
+    linkBlock([
+      pr(41236, 'open', 'success', 'Share link API with expiring tokens'),
+      pr(41240, 'open', 'success', 'Share dialog: copy-link button'),
+      pr(41242, 'open', 'pending', 'Share link settings'),
+      ...LINKS
+    ]),
   interact: async (frame) => {
-    const more = [...frame.querySelectorAll<HTMLButtonElement>('button')].find((button) =>
-      button.textContent?.startsWith('+')
-    )
-    more?.click()
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    const row = [
-      ...document.querySelectorAll<HTMLButtonElement>('[data-radix-popper-content-wrapper] button')
-    ].find((button) => button.textContent?.includes('#41188'))
-    if (!row) {
-      throw new Error('Missing overflow row')
-    }
-    hoverElement(row)
-    await new Promise((resolve) => setTimeout(resolve, 700))
+    rowButton(frame, '2 more').click()
+    await wait(300)
+    await hover(frame, 'Share dialog scaffolding')
   }
 })
 
-/** No repo on this host to read GitHub with: the chip keeps its text tooltip. */
+/** No repo on this host to read GitHub with: the row keeps its text tooltip. */
 export const noGitHubRepo = defineFixture({
   width: 720,
-  render: () => header(),
+  render: () => linkBlock(),
   interact: async (frame) => {
-    hoverElement(chip(frame, '#41230'))
+    hoverElement(rowButton(frame, 'Share dialog: view-only links'))
     await new Promise((resolve) => setTimeout(resolve, 900))
   }
 })
 
-/** A file chip keeps its tooltip. */
+/** A file row keeps its tooltip. */
 export const fileChipTooltip = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
-  render: () => header(),
+  render: () => linkBlock(),
   interact: async (frame) => {
-    hoverElement(chip(frame, 'share-dialog-mock'))
+    hoverElement(rowButton(frame, 'share-dialog-mock'))
     await new Promise((resolve) => setTimeout(resolve, 900))
   }
 })
@@ -152,19 +148,19 @@ export const activeTwinOnOtherHost = defineFixture({
     folderWorkspaces: [
       ...store.folderWorkspaces,
       makeFolderWorkspace({
-        id: fixtureCos.folderWorkspaceId,
+        id: sampleBot.folderWorkspaceId,
         projectGroupId: 'bots',
-        name: fixtureCos.name,
-        folderPath: '/home/fixture/.orca/bots/cos',
+        name: sampleBot.name,
+        folderPath: '/home/fixture/.orca/bots/sample',
         executionHostId: 'runtime:studio'
       })
     ],
-    activeWorktreeId: `folder:${fixtureCos.folderWorkspaceId}`,
+    activeWorktreeId: `folder:${sampleBot.folderWorkspaceId}`,
     activeWorkspaceExecutionHostId: 'runtime:studio'
   },
   setup: signedIn(),
-  render: () => header([pr(41236, 'open', 'success', 'Share link API with expiring tokens')]),
-  interact: (frame) => hover(frame, '#41236')
+  render: () => linkBlock([pr(41236, 'open', 'success', 'Share link API with expiring tokens')]),
+  interact: (frame) => hover(frame, 'Share link API')
 })
 
 /** Keyboard focus opens the card; the first Escape closes only the card, the second goes Back. */
@@ -174,7 +170,7 @@ export const escapeClosesCardFirst = defineFixture({
   setup: signedIn(),
   render: () => <PaneProbe />,
   interact: async (frame) => {
-    const target = chip(frame, '#41230')
+    const target = rowButton(frame, 'Share dialog: view-only links')
     target.focus()
     await wait(700)
     escape(target)
@@ -184,14 +180,14 @@ export const escapeClosesCardFirst = defineFixture({
   }
 })
 
-/** A click on a chip whose card is open opens the link, as before, and the card goes away. */
+/** A click on a row whose card is open opens the link, as before, and the card goes away. */
 export const clickOpensLink = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
   render: () => <PaneProbe />,
   interact: async (frame) => {
-    const target = chip(frame, '#41188')
+    const target = rowButton(frame, 'Share dialog scaffolding')
     hoverElement(target)
     await wait(700)
     target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }))
@@ -205,11 +201,11 @@ export const zoomedNarrowWindow = defineFixture({
   width: 260,
   store,
   setup: signedIn(),
-  render: () => header(),
-  interact: (frame) => hover(frame, '#41230')
+  render: () => linkBlock(),
+  interact: (frame) => hover(frame, 'Share dialog: view-only links')
 })
 
-/** Nothing pre-hovered: for driving the chips with a real pointer and keyboard. */
+/** Nothing pre-hovered: for driving the rows with a real pointer and keyboard. */
 export const idle = defineFixture({
   width: 720,
   store,
@@ -218,7 +214,7 @@ export const idle = defineFixture({
 })
 
 /** The failing PR's first lookup fails and a retry answers: for driving Retry and a reopened card with
- *  a real pointer and keyboard, on a chip and, in a short window, in the "+N" list. */
+ *  a real pointer and keyboard, in the Links block. */
 export const retryRecovers = defineFixture({
   width: 720,
   store,
@@ -230,13 +226,15 @@ export const retryRecovers = defineFixture({
   )
 })
 
-/** The PR changed after the chip read its checks: the loaded card shows the new title and never the
- *  chip's older reading as if current (the lookup itself carries no CI). */
+/** The PR changed after the row read its checks: the loaded card shows the new title and never the
+ *  row's older reading as if current (the lookup itself carries no CI). */
 export const staleChecksOmitted = defineFixture({
   width: 720,
   store,
   setup: signedIn(),
   render: () =>
-    header([pr(STALE_CHECKS, 'open', 'success', 'Share dialog: copy-link button', now - 3 * hour)]),
-  interact: (frame) => hover(frame, `#${STALE_CHECKS}`)
+    linkBlock([
+      pr(STALE_CHECKS, 'open', 'success', 'Share dialog: copy-link button', now - 3 * hour)
+    ]),
+  interact: (frame) => hover(frame, 'Share dialog: copy-link button')
 })
