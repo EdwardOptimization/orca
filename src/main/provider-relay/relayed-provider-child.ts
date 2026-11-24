@@ -291,7 +291,7 @@ export class RelayedProviderChild extends EventEmitter implements ProviderChild 
       this.outcomeLost = true
     }
     // The final output is acked so the daemon can drop the ended relay.
-    void this.output.finish().finally(() => {
+    void this.output.settle().finally(() => {
       this.output.stop()
       this.unbind?.()
       this.unbind = null
