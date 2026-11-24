@@ -39,7 +39,6 @@ const fixtureBot: Bot = {
   chatSessionId: null,
   linear: null,
   github: null,
-  github: null,
   createdAt: 1,
   updatedAt: 1
 }
