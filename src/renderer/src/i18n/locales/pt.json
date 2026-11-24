@@ -25343,8 +25343,7 @@
         "firstItem": "Primeiro item",
         "lastItem": "Último item",
         "previous": "Item anterior",
-        "next": "Próximo item",
-        "subWhere": "Item {{number}} · {{chat}}"
+        "next": "Próximo item"
       },
       "activity": {
         "linked": "vinculou {{links}}",

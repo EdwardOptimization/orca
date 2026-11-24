@@ -24347,8 +24347,7 @@
         "firstItem": "İlk öğe",
         "lastItem": "Son öğe",
         "previous": "Önceki öğe",
-        "next": "Sonraki öğe",
-        "subWhere": "Öğe {{number}} · {{chat}}"
+        "next": "Sonraki öğe"
       },
       "activity": {
         "linked": "{{links}} bağlantılarını bağladı",

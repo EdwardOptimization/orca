@@ -24824,8 +24824,7 @@
         "firstItem": "Premier élément",
         "lastItem": "Dernier élément",
         "previous": "Élément précédent",
-        "next": "Élément suivant",
-        "subWhere": "Élément {{number}} · {{chat}}"
+        "next": "Élément suivant"
       },
       "activity": {
         "linked": "a lié {{links}}",

@@ -30205,12 +30205,10 @@
         "short": "No items yet. When {{bot}} takes something on, it shows up here."
       },
       "field": {
-        "chat": "Chat",
         "description": "description",
-        "doneMeans": "Done means",
+        "doneMeans": "Done when",
         "doneMeansLower": "done means",
-        "title": "title",
-        "doneWhen": "Done when"
+        "title": "title"
       },
       "filter": {
         "clearAll": "Clear filters",
@@ -30281,7 +30279,6 @@
         "links": "Links",
         "showLess": "Show less",
         "showMore": "Show more",
-        "subWhere": "Item {{number}} · {{chat}}",
         "showEarlier": "Show earlier",
         "next": "Next item",
         "previous": "Previous item",

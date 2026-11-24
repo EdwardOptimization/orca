@@ -23892,8 +23892,7 @@
         "firstItem": "第一個項目",
         "lastItem": "最後一個項目",
         "previous": "上一個項目",
-        "next": "下一個項目",
-        "subWhere": "事項 {{number}} · {{chat}}"
+        "next": "下一個項目"
       },
       "activity": {
         "linked": "連結了 {{links}}",

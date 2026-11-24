@@ -27721,8 +27721,7 @@
         "firstItem": "첫 항목",
         "lastItem": "마지막 항목",
         "previous": "이전 항목",
-        "next": "다음 항목",
-        "subWhere": "항목 {{number}} · {{chat}}"
+        "next": "다음 항목"
       },
       "activity": {
         "linked": "이(가) {{links}}을(를) 연결함",
