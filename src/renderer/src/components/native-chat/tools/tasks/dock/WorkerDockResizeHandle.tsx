@@ -11,9 +11,16 @@ const KEY_STEP = 36
 /** The list's top edge, between it and the transcript: drag up for a taller list, double-click to
  *  reset. A thin bar shows on hover only. */
 export function WorkerDockResizeHandle({
-  viewport
+  viewport,
+  height,
+  min,
+  max
 }: {
   viewport: RefObject<HTMLDivElement | null>
+  /** The list's drawn max height after the default floor and the pane cap, in CSS pixels. */
+  height: number
+  min: number
+  max: number
 }) {
   const t = useTranslate()
   const preferred = useWorkerDockListHeight()
@@ -36,6 +43,9 @@ export function WorkerDockResizeHandle({
     <div
       role="separator"
       aria-orientation="horizontal"
+      aria-valuenow={Math.round(height)}
+      aria-valuemin={Math.round(min)}
+      aria-valuemax={Math.round(Math.max(min, max))}
       aria-label={t('components.native-chat.workerDock.resize', 'Resize workers')}
       tabIndex={0}
       data-worker-dock-resize=""

@@ -96,6 +96,8 @@ export function WorkerDockRoster(props: {
     failures: failed
   } = workerDockSummary(props.countIdentities ?? props.identities, props.rows, t)
   const [budget, setBudget] = useState(props.narrow ? 200 : 160)
+  // The resize handle announces the list's height between its default and its cap.
+  const [budgetRange, setBudgetRange] = useState({ min: budget, max: budget })
   const items = useMemo(
     () =>
       identities.map((row, index) => ({
@@ -142,7 +144,15 @@ export function WorkerDockRoster(props: {
   const measure = useLatestHandler(() => {
     const element = viewport.current
     if (element) {
-      setBudget(workerDockRosterBudget(root.current, props.narrow, orderHeld, preferred))
+      const range = (value: number | null) =>
+        workerDockRosterBudget(root.current, props.narrow, orderHeld, value)
+      const min = range(null)
+      const max = range(Number.POSITIVE_INFINITY)
+      setBudget(range(preferred))
+      setBudgetRange((previous) => {
+        const next = { min, max: Number.isFinite(max) ? max : Math.max(min, range(preferred)) }
+        return previous.min === next.min && previous.max === next.max ? previous : next
+      })
     }
   })
   useLayoutEffect(measure, [measure, props.expanded, props.narrow, orderHeld, items, preferred])
@@ -291,7 +301,14 @@ export function WorkerDockRoster(props: {
         })
       }
     >
-      {props.expanded ? <WorkerDockResizeHandle viewport={viewport} /> : null}
+      {props.expanded ? (
+        <WorkerDockResizeHandle
+          viewport={viewport}
+          height={budget}
+          min={budgetRange.min}
+          max={budgetRange.max}
+        />
+      ) : null}
       <WorkerDockHeader
         narrow={props.narrow}
         expanded={props.expanded}

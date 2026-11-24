@@ -13,7 +13,7 @@ afterEach(() => {
 
 const KEY = 'orca.nativeChat.workerDock.listHeight'
 
-function setup() {
+function setup(range = { height: 160, min: 160, max: 600 }) {
   const viewport = document.createElement('div')
   Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 160 })
   const pane = document.createElement('div')
@@ -21,7 +21,7 @@ function setup() {
   pane.getBoundingClientRect = () => ({ height: 1000 }) as DOMRect
   pane.append(viewport)
   document.body.append(pane)
-  render(<WorkerDockResizeHandle viewport={{ current: viewport }} />)
+  render(<WorkerDockResizeHandle viewport={{ current: viewport }} {...range} />)
   return screen.getByRole('separator', { name: 'Resize workers' })
 }
 
@@ -56,4 +56,11 @@ it('never draws the list shorter than its default height', () => {
     workerDockRosterBudget(null, false, false, null)
   )
   expect(workerDockRosterBudget(null, false, false, 400)).toBe(400)
+})
+
+it('announces the drawn height between the default and the cap to assistive tech', () => {
+  const handle = setup({ height: 312.4, min: 160, max: 600 })
+  expect(handle).toHaveAttribute('aria-valuenow', '312')
+  expect(handle).toHaveAttribute('aria-valuemin', '160')
+  expect(handle).toHaveAttribute('aria-valuemax', '600')
 })
