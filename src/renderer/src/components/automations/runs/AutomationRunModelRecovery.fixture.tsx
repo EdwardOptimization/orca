@@ -90,6 +90,7 @@ const scenarios: Record<string, AutomationRun> = {
     automationId: 'a-2',
     runNumber: 8,
     status: 'dispatched',
+    trigger: 'manual',
     sessionKind: 'chat',
     scheduledFor: NOW,
     startedAt: NOW,
