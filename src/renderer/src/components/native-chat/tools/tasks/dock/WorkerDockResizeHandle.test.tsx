@@ -18,7 +18,7 @@ function setup(range = { height: 160, min: 160, max: 600 }) {
   Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 160 })
   const pane = document.createElement('div')
   pane.setAttribute('data-native-chat-root', '')
-  pane.getBoundingClientRect = () => ({ height: 1000 }) as DOMRect
+  pane.getBoundingClientRect = () => new DOMRect(0, 0, 0, 1000)
   pane.append(viewport)
   document.body.append(pane)
   render(<WorkerDockResizeHandle viewport={{ current: viewport }} {...range} />)
