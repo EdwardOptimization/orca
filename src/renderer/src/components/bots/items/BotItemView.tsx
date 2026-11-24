@@ -205,7 +205,8 @@ export function BotItemBody({
   const { scrollRef, contentRef, scrollerProps, showJump, jumpToLatest } = useBotTranscriptFollow({
     itemCount: view.events.length + pending.shown.length,
     isWorking: false,
-    isVisible: true
+    isVisible: true,
+    preserveReaderOnViewportResize: true
   })
   // From the comment box or a quick reply: shown at once, then sent to the host.
   const sendComment: Parameters<typeof useBotItemQuestionSteps>[3] = (
