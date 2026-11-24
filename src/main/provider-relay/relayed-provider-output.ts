@@ -48,8 +48,6 @@ export class RelayedProviderOutput {
   /** Requests already handed on, so a replay or reattach never asks the user twice. */
   private readonly deliveredPending = new Set<number>()
   private held: { seq: number | null; line: string }[] | null
-  /** Acks stop here while held: what follows is replayed to the next app (a compaction's reply). */
-  private ackCeiling: number | null = null
   private ackTimer: ReturnType<typeof setTimeout> | null = null
   private acking: Promise<void> = Promise.resolve()
   private stopped = false
@@ -125,28 +123,6 @@ export class RelayedProviderOutput {
     }
   }
 
-  /** Holds acks at what was handed on so far until the returned release; the spool cap bounds it. */
-  holdAcks(): () => void {
-    this.ackCeiling ??= this.pushedSeq
-    return () => {
-      this.ackCeiling = null
-      this.scheduleAck()
-    }
-  }
-
-  /**
-   * The daemon's spool is filling: a held ack would stop the agent's output and, with it, the
-   * answer that ends the hold. The hold goes (only that compaction's full-text judgement is lost).
-   */
-  ackWanted(): Promise<void> {
-    if (this.ackCeiling !== null) {
-      this.ackCeiling = null
-      console.warn('[provider-relay] released a held ack: the relay spool is filling')
-    }
-    // The ask saves live text first, as the base's ack-wanted does.
-    return this.settle(true)
-  }
-
   /** Acks everything handed on now, after its durability barrier; `force` saves live text first. */
   settle(force = false): Promise<void> {
     this.clearAckTimer()
@@ -211,8 +187,7 @@ export class RelayedProviderOutput {
     this.acking = this.acking.then(async () => {
       // The daemon's ask (its cap) releases the floor; the forced save keeps the text.
       const floor = force ? null : (this.options.ackFloor?.floor() ?? null)
-      const base = floor === null ? this.pushedSeq : Math.min(this.pushedSeq, floor - 1)
-      const target = Math.min(base, this.ackCeiling ?? Number.POSITIVE_INFINITY)
+      const target = floor === null ? this.pushedSeq : Math.min(this.pushedSeq, floor - 1)
       if (target <= this.ackedSeq || this.stopped) {
         return
       }
