@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, ExternalLink, KeyRound, Monitor, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, KeyRound, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import CommentMarkdown from '@/components/comment-markdown/CommentMarkdown'
@@ -25,7 +25,7 @@ import {
   formatAutomationDateTimeWithRelative
 } from '../automation-page-parts'
 import { AutomationRunStatusLabel } from './AutomationRunStatusDot'
-import { AutomationRunRerunButton } from './AutomationRunRerunButton'
+import { AutomationRunToolbar } from './AutomationRunToolbar'
 import { formatAutomationCost, formatAutomationTokens } from './automation-usage-model'
 import {
   RUN_START_DRIFT_LABEL_MS,
@@ -137,9 +137,6 @@ export function AutomationRunDetailsPage({
         }}
       />
     ) : null
-  const editLabel = t('automations.runPage.editAutomation', 'Edit automation')
-  const rerun = canRerun && automation
-  const edit = onEdit && automation
 
   const stepRef = useRef({ newer, older, onSelectRun })
   useEffect(() => {
@@ -181,13 +178,17 @@ export function AutomationRunDetailsPage({
 
   return (
     <AutomationsPageFrame nav={nav}>
-      <div className="flex flex-col gap-4 pt-5">
+      <div className="@container flex flex-col gap-4 pt-5">
         <header className="min-w-0">
           <div className="flex min-w-0 items-center gap-2.5">
             <AutomationsPageTitle>
               {formatAutomationRunLabel(run, t, intlLocale)}
             </AutomationsPageTitle>
-            <AutomationRunStatusLabel status={run.status} pill />
+            <AutomationRunStatusLabel
+              status={run.status}
+              pill
+              tracksCompletion={run.sessionKind === 'chat' && Boolean(automation?.bot)}
+            />
             <span className="flex-1" />
             {/* Why: left reads as back in time, so Older sits left and Newer right. */}
             {(['older', 'newer'] as const).map((step) => {
@@ -342,58 +343,14 @@ export function AutomationRunDetailsPage({
           />
         ) : null}
 
-        {workspaceActionLabel || rerun || edit ? (
-          <div className="@container flex min-w-0 items-center gap-2">
-            {workspaceActionLabel ? (
-              <Button type="button" size="sm" className="min-w-0" onClick={onOpenWorkspace}>
-                <ExternalLink className="size-3.5" />
-                <span className="truncate">{workspaceActionLabel}</span>
-              </Button>
-            ) : null}
-            {rerun ? (
-              <AutomationRunRerunButton
-                pending={isRerunPending}
-                disabled={isModelFixPending}
-                onRerun={onRerun}
-              />
-            ) : null}
-            {edit ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0 @max-[25rem]:hidden"
-                  aria-label={editLabel}
-                  disabled={isModelFixPending}
-                  onClick={onEdit}
-                >
-                  <Pencil className="size-3.5" />
-                  {t('automations.runPage.edit', 'Edit')}
-                </Button>
-                <div className="shrink-0 @min-[25rem]:hidden">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label={editLabel}
-                        disabled={isModelFixPending}
-                        onClick={onEdit}
-                      >
-                        <Pencil className="size-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" sideOffset={4}>
-                      {editLabel}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </>
-            ) : null}
-          </div>
-        ) : null}
+        <AutomationRunToolbar
+          workspaceActionLabel={workspaceActionLabel}
+          onOpenWorkspace={onOpenWorkspace}
+          onRerun={canRerun && automation ? onRerun : undefined}
+          onEdit={automation ? onEdit : undefined}
+          isRerunPending={isRerunPending}
+          isModelFixPending={isModelFixPending}
+        />
 
         <section className="min-w-0 rounded-lg border border-border/60">
           <h3

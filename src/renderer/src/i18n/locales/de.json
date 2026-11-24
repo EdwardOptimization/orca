@@ -23718,7 +23718,8 @@
     },
     "runPage": {
       "edit": "Bearbeiten",
-      "editAutomation": "Automatisierung bearbeiten"
+      "editAutomation": "Automatisierung bearbeiten",
+      "running": "Läuft"
     }
   },
   "codeHost": {

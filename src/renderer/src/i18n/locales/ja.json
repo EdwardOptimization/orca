@@ -24898,7 +24898,8 @@
     },
     "runPage": {
       "edit": "編集",
-      "editAutomation": "オートメーションを編集"
+      "editAutomation": "オートメーションを編集",
+      "running": "実行中"
     }
   },
   "codeHost": {

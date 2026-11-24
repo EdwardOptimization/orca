@@ -23837,7 +23837,8 @@
     },
     "runPage": {
       "edit": "Düzenle",
-      "editAutomation": "Otomasyonu düzenle"
+      "editAutomation": "Otomasyonu düzenle",
+      "running": "Çalışıyor"
     }
   },
   "codeHost": {

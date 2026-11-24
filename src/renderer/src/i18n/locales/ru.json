@@ -24489,7 +24489,8 @@
     },
     "runPage": {
       "edit": "Изменить",
-      "editAutomation": "Изменить автоматизацию"
+      "editAutomation": "Изменить автоматизацию",
+      "running": "Работает"
     }
   },
   "codeHost": {

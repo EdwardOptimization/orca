@@ -27076,7 +27076,8 @@
     },
     "runPage": {
       "edit": "Edit",
-      "editAutomation": "Edit automation"
+      "editAutomation": "Edit automation",
+      "running": "Running"
     }
   },
   "codeHost": {

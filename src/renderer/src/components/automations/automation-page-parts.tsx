@@ -142,7 +142,7 @@ export function AutomationRunErrorNotice({
       role="alert"
       className={cn(
         'flex items-center gap-x-3 gap-y-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive',
-        oneLine ? 'flex-nowrap' : 'flex-wrap',
+        oneLine ? 'flex-nowrap @max-[25rem]:gap-x-2 @max-[25rem]:text-xs' : 'flex-wrap',
         className
       )}
     >

@@ -24734,7 +24734,8 @@
     },
     "runPage": {
       "edit": "Editar",
-      "editAutomation": "Editar automação"
+      "editAutomation": "Editar automação",
+      "running": "Em execução"
     }
   },
   "codeHost": {

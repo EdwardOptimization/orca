@@ -83,11 +83,11 @@ export function AutomationRunModelSelect({
       <SelectTrigger
         size="xs"
         aria-label={t('automations.runModelFix.model', 'Model')}
-        className="max-w-[45%] min-w-0 shrink-0 border-destructive/30 bg-background text-foreground dark:bg-background *:data-[slot=select-value]:block *:data-[slot=select-value]:truncate"
+        className="max-w-[45%] min-w-0 shrink-0 border-destructive/30 bg-background text-foreground dark:bg-background *:data-[slot=select-value]:block *:data-[slot=select-value]:truncate @max-[25rem]:max-w-[28%]"
       >
         <SelectValue placeholder={t('automations.runModelFix.pickModel', 'Pick a model')} />
       </SelectTrigger>
-      <SelectContent align="end">
+      <SelectContent position="popper" side="bottom" align="end">
         {/* A saved model the list no longer offers still shows as the current value. */}
         {listed ? null : (
           <SelectItem value={value} disabled>

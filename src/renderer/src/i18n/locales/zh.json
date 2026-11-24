@@ -26381,7 +26381,8 @@
     },
     "runPage": {
       "edit": "编辑",
-      "editAutomation": "编辑自动化"
+      "editAutomation": "编辑自动化",
+      "running": "运行中"
     }
   },
   "codeHost": {

@@ -23382,7 +23382,8 @@
     },
     "runPage": {
       "edit": "編輯",
-      "editAutomation": "編輯自動化"
+      "editAutomation": "編輯自動化",
+      "running": "執行中"
     }
   },
   "codeHost": {

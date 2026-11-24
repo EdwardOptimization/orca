@@ -24215,7 +24215,8 @@
     },
     "runPage": {
       "edit": "Modifier",
-      "editAutomation": "Modifier l’automatisation"
+      "editAutomation": "Modifier l’automatisation",
+      "running": "En cours"
     }
   },
   "codeHost": {

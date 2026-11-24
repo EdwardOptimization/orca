@@ -26554,7 +26554,8 @@
     },
     "runPage": {
       "edit": "편집",
-      "editAutomation": "자동화 편집"
+      "editAutomation": "자동화 편집",
+      "running": "실행 중"
     }
   },
   "codeHost": {
