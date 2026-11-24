@@ -1,4 +1,5 @@
 import { parseOrcaSessionAddress } from '../../../../../../shared/agent-session/identity/orca-session-address'
+import { isStructuredWorkerHandle } from '../../../../../../shared/orchestration/workers/structured-worker-handle'
 import type { OrcaRuntimeService } from '../../../../orca-runtime'
 import type { OrchestrationDb } from '../../../../orchestration/db/orchestration-db'
 import {
@@ -82,10 +83,15 @@ async function continueUnreadMail(
     // Orca does not restart a stopped worker on its own; the next send carries its mail.
     return
   }
+  const failedDuringChatAttach =
+    worker?.state === 'failed' &&
+    (chatStartBeforeBrief(worker) ||
+      (worker.stage === 'authority_attached' &&
+        isStructuredWorkerHandle(worker.agent_terminal_handle ?? '')))
   if (
     worker?.runtime_epoch &&
     worker.runtime_epoch !== runtime.getRuntimeId() &&
-    (worker.state === 'starting' || (worker.state === 'failed' && chatStartBeforeBrief(worker)))
+    (worker.state === 'starting' || failedDuringChatAttach)
   ) {
     if (worker.agent_terminal_handle) {
       // Its agent may still run, so only the coordinator can tell whether to retry.
