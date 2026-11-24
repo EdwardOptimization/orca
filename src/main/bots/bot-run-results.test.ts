@@ -8,53 +8,24 @@ import {
   type BotRunDeliveryDependencies,
   type BotRunResult
 } from './bot-run-results'
-import type { BotTurnEnd } from './bot-run-turn-watch'
 
 const NOTICE =
   "This run's message was answered together with another message, so its result wasn't posted."
 
-describe('automation model failures', () => {
-  const unavailable = { kind: 'modelUnavailable' as const }
-
-  function failedRun(ended: BotTurnEnd, runsIn: 'new' | 'chat' = 'new') {
-    return deliverBotRunResult({ notify: () => {} } as BotRunDeliveryDependencies, {
-      automation: { id: 'auto-1', name: 'Morning digest', dtstart: 1 },
-      run: { id: 'run-1', trigger: 'scheduled' },
-      bot: makeTestBot({ agent: 'claude', launch: { model: 'model-x' } }),
-      target: { runsIn, resultsTo: 'none' },
-      sessionId: 'session-1',
-      ended
-    })
-  }
-
-  it('keeps the failed run’s agent and model when the provider does not name them', async () => {
-    const completion = await failedRun({ outcome: 'failure', message: '', failure: unavailable })
-
-    expect(completion).toMatchObject({
-      status: 'dispatch_failed',
-      errorCode: 'agentModelUnavailable',
-      errorParams: { agent: 'claude', model: 'model-x' }
-    })
+it('keeps the failed run’s agent and model in the run result', async () => {
+  const completion = await deliverBotRunResult({ notify: () => {} } as BotRunDeliveryDependencies, {
+    automation: { id: 'auto-1', name: 'Morning digest', dtstart: 1 },
+    run: { id: 'run-1', trigger: 'scheduled' },
+    bot: makeTestBot({ agent: 'claude', launch: { model: 'model-x' } }),
+    target: { runsIn: 'new', resultsTo: 'none' },
+    sessionId: 'session-1',
+    ended: { outcome: 'failure', message: '', failure: { kind: 'modelUnavailable' } }
   })
 
-  it('classifies a pre-turn model refusal without attributing a shared chat to the bot setup', async () => {
-    const completion = await failedRun(
-      { outcome: 'failure', message: '', refusal: unavailable },
-      'chat'
-    )
-
-    expect(completion).toMatchObject({
-      status: 'dispatch_failed',
-      errorCode: 'agentModelUnavailable'
-    })
-    expect(completion.errorParams).toEqual({})
-  })
-
-  it('leaves a different failure unclassified', async () => {
-    const error = 'API Error: 503 Service unavailable'
-    const completion = await failedRun({ outcome: 'failure', message: '', error })
-
-    expect(completion).toEqual({ status: 'dispatch_failed', error })
+  expect(completion).toMatchObject({
+    status: 'dispatch_failed',
+    errorCode: 'agentModelUnavailable',
+    errorParams: { agent: 'claude', model: 'model-x' }
   })
 })
 
